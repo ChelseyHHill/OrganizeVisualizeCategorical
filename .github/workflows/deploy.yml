@@ -5,10 +5,6 @@ on:
     branches: [main, master]
 
 # Allows one concurrent deployment to prevent race conditions
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -29,38 +25,16 @@ jobs:
 
       - name: Install Shinylive and dependencies
         run: |
-          options(repos = c(CRAN = "https://r-project.org"))
           install.packages(c("shinylive", "shiny"))
         shell: Rscript {0}
 
-      - name: Prepare Clean Build Directory
-        run: |
-          # 1. Create a clean isolated directory
-          mkdir tmp_app
-          
-          # 2. Copy the main app script(s) from root
-          if [ -f "app.R" ]; then
-            cp app.R tmp_app/
-          elif [ -f "ui.R" ] && [ -f "server.R" ]; then
-            cp ui.R server.R tmp_app/
-          else
-            echo "Error: No app.R or ui.R/server.R found in root!" && exit 1
-          fi
-          
-          # 3. Optional: Copy common assets folders if they exist in your root
-          [ -d "www" ] && cp -r www tmp_app/ || true
-          [ -d "data" ] && cp -r data tmp_app/ || true
-        shell: bash
-
       - name: Export App
         run: |
-          shinylive::export("tmp_app", "_site")
+          shinylive::export(".", "_site")
         shell: Rscript {0}
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
-        with:
-          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment
